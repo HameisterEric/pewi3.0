@@ -5124,12 +5124,12 @@ function toggleReplacementFrame(options) {
   var modal = document.getElementById('modalReplacement');
   innermodal = modal.contentDocument || modal.contentWindow.document;
   if(modal.style.visibility === 'visible'){
-    console.log('here');
-    modal.style.visibility = 'hidden';
+    modal.style.display = 'none';
     modalUp = false;
   }
   else {
-    modal.style.visibility = 'visible'
+    modal.style.display = 'block';
+    modal.style.visibility = 'visible';
     select = innermodal.getElementById('replacementSelect');
     while(select.firstChild){
       select.removeChild(select.firstChild);
