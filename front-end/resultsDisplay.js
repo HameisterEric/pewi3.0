@@ -2262,12 +2262,12 @@ function generateResultsTable() {
 
       //keep track of subheadings, just 1 this time
       switch (l) {
-        case 0:  
+        case 0:
           //htmlTableString += "<tr class='tableHeading'><td><b>Yield</b></td></tr>";
             //put Yield header, in bold
             htmlTableString += "<tr>";
             htmlTableString += "<td><b>" + "Yield" + "<b></td>";
-            
+
             //calculate total score for each year and place next to Yield header
             for(var y = 1; y <= upToYear; y++){
               htmlTableString += "<td><b>";
@@ -4065,11 +4065,7 @@ function createMockDataGraphic1(){
 
 }
 
-function calculateDataTotals(){
-
-}
 function EconomicsGraphic1() {
-  console.log(this);
   this.options = [];
   this.render =  () => {
     svg.selectAll("*").remove();
