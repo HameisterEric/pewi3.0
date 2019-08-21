@@ -11,6 +11,7 @@ var Economics = function () {
   this.rawRev=[];
   this.scaledRev=[];
   this.cornAfters=[]
+  this.combinedLineItems = [];
 
 //the number of years in the cycle so that we can divide to get the yearly cost; The -1 accounts for the 'none' land use.
   yearCosts = [-1,1,1,1,1,4,1,1,4,40,40,40,11,7,50,{'Grapes (Conventional)': 22 * 4,'Green Beans': 1 * 4,'Winter Squash': 1 * 4,'Strawberries': 3 *4}]
@@ -198,7 +199,6 @@ var Economics = function () {
         let copy = JSON.parse(JSON.stringify(dataPoint));
         let luID = parseInt(copy['LU_ID']);
         if(copy['LU_ID'] == 1 || copy['LU_ID'] == 2){//corn needs to be treated specially
-          console.log(luID)
           copy["Value"] *= this.cornAfters[i][luID][copy['Sub Crop']];
           copy["# Labor Hours"] *= this.cornAfters[i][luID][copy['Sub Crop']];
         }
@@ -215,6 +215,7 @@ var Economics = function () {
     this.divideByCategory(['Action - Cost Type', 'Time - Cost Type', 'Fixed/Variable']);
     this.chart4Information(['Action - Cost Type', 'Time - Cost Type']);
     this.calcSubcrops();
+    this.combineDifferentYearLineItems();
   }
 
   //this is unoptimized for finding the amount of corn after corn and corn after soybeans
@@ -253,8 +254,28 @@ var Economics = function () {
         }
       })
     }
+  }
 
-
+  this.combineDifferentYearLineItems = function (){
+    for(let i = 1; i <= boardData[currentBoard].calculatedToYear; i++){
+      this.combinedLineItems[i] = [];
+      this.mapData[i].forEach( dataPoint => {
+        let foundItem = this.combinedLineItems[i].find(item => {
+          return item['LU_ID'] === dataPoint['LU_ID']
+          && item['Sub Crop'] === dataPoint['Sub Crop']
+          && item['Cost Name'] === dataPoint['Cost Name']
+          && item['Time - Cost Type'] === dataPoint['Time - Cost Type']
+          && item['Action - Cost Type'] === dataPoint['Action - Cost Type']
+          && item['Description'] === dataPoint['Description'];
+        });
+        if(foundItem){
+          foundItem.Value += dataPoint.Value;
+        }
+        else{
+          this.combinedLineItems[i].push(dataPoint);
+        }
+      });
+    }
   }
 }
 var economics = new Economics();

@@ -2481,7 +2481,7 @@ function tableSort(column){
     else if(a[column] > b[column]) return 1;
     else return 0;
   });
-  this.parent.updateTables(values, this.parent);
+  updateTables(values);
 }
 
 function numSort(column){
@@ -2489,11 +2489,11 @@ function numSort(column){
   values.sort(function(a,b){
     return Number.parseFloat(b[column]) - Number.parseFloat(a[column]);
   });
-  this.parent.updateTables(values, this.parent);
+  updateTables(values);
 }
 function generateEconTableData(year){
   let results = []
-  let econ = economics.mapData[year];
+  let econ = economics.combinedLineItems[year];
   for(let i = 0; i < econ.length; ++i){
     var tempObj = getObj(econ[i]);
     results.push(tempObj);
@@ -2536,19 +2536,18 @@ function generateEconomicsTables() {
 
   this.clearTableVars = () => {
     Object.keys(econtables).forEach(key =>{
-      econtables[key].table = '<table><tr><th onclick="tableSort(\'costName\')">Cost Name</th><th onclick="tableSort(\'time\')">Time</th><th onclick="tableSort(\'action\')">Action</th><th onclick="numSort(\'value\')">Value</th><th>Frequency</th><th>Description</th></tr>'
+      econtables[key].table = '<table><tr><th onclick="parent.tableSort(\'costName\')">Cost Name</th><th onclick="parent.tableSort(\'time\')">Time</th><th onclick="parent.tableSort(\'action\')">Action</th><th onclick="parent.numSort(\'value\')">Value</th><th>Frequency</th><th>Description</th></tr>'
     })
   }
 
   this.updateTables = (values) =>{
     this.clearTableVars();
-    console.log(values);
 
     for(var i = 0; i < values.length; ++i){
       curLandUse = values[i].landUse;
       Object.keys(econtables).forEach(key =>{
         if(curLandUse == econtables[key].landuse){
-          if(!values[i].subCrop || values[i].subCrop == econtables[key].subCrop){
+          if(values[i].value && (!values[i].subCrop || values[i].subCrop == econtables[key].subCrop)){
             econtables[key].table += "<tr><td>"+values[i].costName+"</td><td>"+values[i].time+"</td><td>"+values[i].action+'</td><td style="text-align:right">'+"$"+numFormatting(values[i].value)+"</td><td>"+values[i].timeOfYear+"</td><td>"+values[i].description+"</td></tr>";
           }
         }
@@ -2556,25 +2555,36 @@ function generateEconomicsTables() {
     }
 
     Object.keys(econtables).forEach(key =>{
-      econtables[key].table += "</table>";
+      if(!econtables[key].table.includes("td")){
+        document.getElementById('resultsFrame').contentWindow.document.getElementById(key).parentNode.style = 'display:none';
+      }
+      else {
+        econtables[key].table += "</table>";
+        document.getElementById('resultsFrame').contentWindow.document.getElementById(key).parentNode.style = 'display:block';
+      }
+      document.getElementById('resultsFrame').contentWindow.document.getElementById(key).innerHTML = econtables[key].table
+      if(!findPapaTag( document.getElementById('resultsFrame').contentWindow.document.getElementById(key)).innerHTML.includes("<td>")){
+        findPapaTag( document.getElementById('resultsFrame').contentWindow.document.getElementById(key)).style = 'display:none';
+      }
+      else {
+        findPapaTag( document.getElementById('resultsFrame').contentWindow.document.getElementById(key)).style = 'display:block';
+      }
     });
 
     placeTotalsOnBars(document.getElementById('resultsFrame').contentWindow.document.getElementById("yearSelect").value);
-    this.setTables();
   }
 
  getEconomicsData(results);
 
   //updates the tables by calling updateTables
 
-  this.setTables = (timeOrAction) => {
-    Object.keys(econtables).forEach(key =>{
-      document.getElementById('resultsFrame').contentWindow.document.getElementById(key).innerHTML = econtables[key].table
-    });
-  }
   this.updateTables(results);
 
 }//end generateEconomicsTables()
+
+function findPapaTag(el){
+  return el.parentNode.classList.contains('accordion') ? el : findPapaTag(el.parentNode)
+}
 
  function getEconomicsData(data) {
   data.splice(-1,1);
@@ -3650,12 +3660,6 @@ function placeTotalsOnBars(year){
 
 
 
-function changeYear(){
-  var yearVal =  document.getElementById('resultsFrame').contentWindow.document.getElementById("yearSelect").value;
-
-  placeTotalsOnBars(yearVal);
-  this.parent.updateTables(generateEconTableData(yearVal));
-}
 
 
 function enterpriseBudgets(){

@@ -35,12 +35,15 @@
   } //end changeLandPieBy()
 
   //changeLandPieBy toggles the year and then calls the pie graph function
-  function changeEconPieBy(numberOfYears) {
+  function changeEconPieBy(numberOfYears, setYear) {
+
     //parent is index.html
     //resultsDisplay.js
-    year = toggleYearForEconPlotBy(numberOfYears);
+    year = toggleYearForEconPlotBy(numberOfYears, setYear);
     parent.drawD3EconPieChart(year, isLandPlotOnCategories);
     parent.drawD3EconRevPieChart(year, isLandPlotOnCategories);
+    document.getElementById("yearSelect").value = year;
+    parent.updateTables(parent.generateEconTableData(year));
   }
 
   /*
@@ -160,16 +163,21 @@
     return year;
   } //end toggleYearForLandPlotBy()
 
+  function changeYear(){
+    var yearVal =  document.getElementById("yearSelect").value;
+    changeEconPieBy(false, yearVal)
+
+    placeTotalsOnBars(yearVal);
+    this.parent.updateTables(generateEconTableData(yearVal));
+  }
 
   //toggleYearForLandPlotBy(), examines the current year and the limits
   // up and down arrow are turned off if one or both present the opportunity
   // for surpassing an upper or lower limit.
-  function toggleYearForEconPlotBy(yearsToChange) {
+  function toggleYearForEconPlotBy(yearsToChange, setToYear) {
     //grab info from div, since passing data between frames is difficult
     var upTo = Number(document.getElementById('upTo').innerHTML);
-    var year = Number(document.getElementById('landYear').innerHTML);
-
-     year = year + yearsToChange;
+    var year = setToYear || Number(document.getElementById('landYear').innerHTML) + yearsToChange;
 
      //reset functionality
     document.getElementById('yearUpEcon').className = "upArrow";
