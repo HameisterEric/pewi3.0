@@ -12,6 +12,8 @@ var Economics = function () {
   this.scaledRev=[];
   this.cornAfters=[]
   this.combinedLineItems = [];
+  this.bmpData=[];
+  this.bmpLandTotals=[];
 
 //the number of years in the cycle so that we can divide to get the yearly cost; The -1 accounts for the 'none' land use.
   yearCosts = [-1,1,1,1,1,4,1,1,4,40,40,40,11,7,50,{'Grapes (Conventional)': 22 * 4,'Green Beans': 1 * 4,'Winter Squash': 1 * 4,'Strawberries': 3 *4}]
@@ -84,7 +86,10 @@ var Economics = function () {
         dataPoint["Value"] /= divisionForLU;
         dataPoint["# Labor Hours"] /= divisionForLU;
       })
-    })
+    });
+    d3.csv('./bmpCosts.csv', (data) => {
+      this.bmpData=data;
+    });
   //graph
   //graphic 4 extract data from raw data
   this.chart4Information = function(lists) {
@@ -157,6 +162,7 @@ var Economics = function () {
 
   this.mapChange = function (){ //called when the map changes in order to edit the intermediate step.
     calculateCornAfters();
+    this.calculateBMPLandTotals();
     let landUses = [];
     this.mapData = [];
     //Less than ideal coding, but given how Totals is structured the easiest way
@@ -168,9 +174,10 @@ var Economics = function () {
       let keys = Object.keys(Totals.landUseResults[0]);
       for(let j = 0; j < keys.length; j++){
         let key = keys[j];
-        //this substring is to link different keys from different objects together... again less than ideal
-        landUses[i][LandUseType[key.substring(0, key.length - 7)]] = Totals.landUseResults[i][key]
+        //this substring is to link different keys from different objects together... again less than ideal landUses[i][LandUseType[key.substring(0, key.length - 7)]] = Totals.landUseResults[i][key]
       }
+
+            //Calculate revenue
       this.rawRev.forEach(dataPoint => {
         if(dataPoint['Units'] === '$/acre'){
           if(dataPoint['LU_ID'] == 15){
@@ -196,6 +203,7 @@ var Economics = function () {
       });
 
       this.rawData.forEach(dataPoint => {
+        let conservationMultiplier = 1;
         let copy = JSON.parse(JSON.stringify(dataPoint));
         let luID = parseInt(copy['LU_ID']);
         if(copy['LU_ID'] == 1 || copy['LU_ID'] == 2){//corn needs to be treated specially
@@ -223,10 +231,9 @@ var Economics = function () {
   calculateCornAfters = () =>{
     for(let i = 1; i <= boardData[currentBoard].calculatedToYear; i++){
       this.cornAfters[i] = [,{'Corn after Soybean':0, 'Corn after Corn':0},{'Corn after Soybean':0, 'Corn after Corn':0}]
-      for (var j = 0; j < boardData[currentBoard].map.length; j++) {
-        if(boardData[currentBoard].map[j].landType[i] == 1 || boardData[currentBoard].map[j].landType[i] == 2){ //if there it is corn
+      for (let j = 0; j < boardData[currentBoard].map.length; j++) {
+        if(boardData[currentBoard].map[j].landType[i] == 1 || boardData[currentBoard].map[j].landType[i] == 2){ //if it is corn
           if(boardData[currentBoard].map[j].landType[i-1] == 3 || boardData[currentBoard].map[j].landType[i-1] == 4){ //if the corn is after soybean
-            console.log(i);
             this.cornAfters[i][boardData[currentBoard].map[j].landType[i]]['Corn after Soybean'] += boardData[currentBoard].map[j].area;
           }
           else {
@@ -276,6 +283,44 @@ var Economics = function () {
         }
       });
     }
+  }
+
+  this.calculateBMPLandTotals = function (){
+    let parameters = document.getElementById('parameters').innerHTML;
+    for(let i = 1; i <= boardData[currentBoard].calculatedToYear; i++){
+      this.bmpLandTotals[i] = [];
+      this.bmpLandTotals[i][2] = {'Corn after Corn': {'Grassed Waterways':0, 'Contours':0, 'Buffers':0, 'Cropped':0}, 'Corn after Soybean':{'Grassed Waterways':0, 'Contours':0, 'Buffers':0, 'Cropped':0, 'Cropped':0}};//the totals can be access economics.bmpLandTotals[year][LU ID][either Corn after Corn or Corn after Soybean][type]
+      this.bmpLandTotals[i][4] = {'Grassed Waterways':0, 'Contours':0, 'Buffers':0, 'Cropped':0};//the totals can be access economics.bmpLandTotals[year][LU ID][type]
+      let toEdit;
+      let optionsString;
+      for (let j = 0; j < boardData[currentBoard].map.length; j++) {
+        if(boardData[currentBoard].map[j].landType[i] == 2){
+          if(boardData[currentBoard].map[j].landType[i-1] == 3 || boardData[currentBoard].map[j].landType[i-1] == 4){
+            toEdit = this.bmpLandTotals[i][2]['Corn after Soybean'];
+          }
+          else {
+            toEdit = this.bmpLandTotals[i][2]['Corn after Corn'];
+          }
+          optionsString = 'cornBMP-'
+        }
+        else if(boardData[currentBoard].map[j].landType[i] == 4){
+          toEdit = this.bmpLandTotals[i][4];
+          optionsString = 'soybeanBMP-'
+        }
+        if(toEdit){
+          console.log(optionsString + 'streambuffer')
+          localBufferArea = parameters.includes(optionsString + 'streambuffer') ? boardData[currentBoard].map[j].bufferArea : 0;
+          toEdit['Buffers'] += localBufferArea;
+          remainingArea = boardData[currentBoard].map[j].area - localBufferArea;
+          localContourArea = parameters.includes(optionsString + 'contourterracing') ? remainingArea * boardData[currentBoard].map[j].contourArea: 0;
+          toEdit['Contours'] += localContourArea;
+          localGrassWaterwayArea = parameters.includes(optionsString + 'grassedwaterway') ? remainingArea * (.1 - boardData[currentBoard].map[j].contourArea) : 0;
+          toEdit['Grassed Waterways'] += localGrassWaterwayArea;
+          toEdit['Cropped'] += remainingArea - localGrassWaterwayArea - localContourArea;
+        }
+      }
+    }
+    console.log(this.bmpLandTotals);
   }
 }
 var economics = new Economics();

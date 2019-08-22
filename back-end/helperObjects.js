@@ -3878,6 +3878,8 @@ function Tile(tileArray, board) {
   this.watershedNitrogenContribution = tileArray[22];
   this.strategicWetland = tileArray[23];
   this.riverStreams = tileArray[24];
+  this.contourArea = parseFloat(tileArray[25]);
+  this.bufferArea = parseFloat(tileArray[26]);
 
 
 
