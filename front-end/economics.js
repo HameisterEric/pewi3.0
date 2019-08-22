@@ -174,7 +174,8 @@ var Economics = function () {
       let keys = Object.keys(Totals.landUseResults[0]);
       for(let j = 0; j < keys.length; j++){
         let key = keys[j];
-        //this substring is to link different keys from different objects together... again less than ideal landUses[i][LandUseType[key.substring(0, key.length - 7)]] = Totals.landUseResults[i][key]
+        //this substring is to link different keys from different objects together... again less than ideal
+        landUses[i][LandUseType[key.substring(0, key.length - 7)]] = Totals.landUseResults[i][key]
       }
 
             //Calculate revenue
@@ -301,14 +302,13 @@ var Economics = function () {
           else {
             toEdit = this.bmpLandTotals[i][2]['Corn after Corn'];
           }
-          optionsString = 'cornBMP-'
+          optionsString = 'cornBMP-';
         }
         else if(boardData[currentBoard].map[j].landType[i] == 4){
           toEdit = this.bmpLandTotals[i][4];
-          optionsString = 'soybeanBMP-'
+          optionsString = 'soybeanBMP-';
         }
         if(toEdit){
-          console.log(optionsString + 'streambuffer')
           localBufferArea = parameters.includes(optionsString + 'streambuffer') ? boardData[currentBoard].map[j].bufferArea : 0;
           toEdit['Buffers'] += localBufferArea;
           remainingArea = boardData[currentBoard].map[j].area - localBufferArea;
